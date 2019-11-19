@@ -7,7 +7,7 @@ The scripts creates an optimized mini-gene sequence using a set of nucleotide su
 Copyright (c) 2018, 2019 D. Malko
 All Rights Reserved
 
-PeptoVar is free software: you can redistribute it and/or modify
+CassOpt is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
