@@ -11,7 +11,7 @@ import sys
 sqlite_file = 'peptdb.sqlite'
 
 def main():
-    input_parser = argparse.ArgumentParser(description='CaBuilder: the program to build non immunogenic cassettes.')
+    input_parser = argparse.ArgumentParser(description='CaBuilder: the program to build nonimmunogenic cassettes.')
     input_parser.add_argument('f', metavar='input_FASTA_file.fa', help='FASTA file of junction peptides; the fasta header format: >lName_rName_lPos_lIns_rIns_rPos')
     input_parser.add_argument('p', metavar='input_netMHCpan_file.txt', help='netMHCpan output file')
     
