@@ -11,7 +11,7 @@ If you haven't found the answer to your question in the docs, or have any sugges
 <br />![my mail](https://user-images.githubusercontent.com/5543031/28415000-8bea641e-6d56-11e7-85ca-4287500a4192.png)
 
 ## License
-Copyright (c) 2017, 2018, D. Malko
+Copyright (c) 2018, 2019, D. Malko
 All Rights Reserved
 
 PeptoVar is free software: you can redistribute it and/or modify
