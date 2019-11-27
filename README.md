@@ -7,7 +7,3 @@ The pipeline creates an optimized mini-gene sequence using a set of nucleotide s
 Copyright (c) 2018, 2019 D. Malko
 All Rights Reserved
 
-CassOpt is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
