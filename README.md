@@ -3,6 +3,27 @@
 # CassOpt (Cassette Optimizer)
 The program creates an optimized mini-gene sequence using a set of nucleotide sub-sequences which code predicted Minor Histocompatibility Antigenes (MiHA). The optimized mini-genes are used for experemental bulk validation of immunogenicity of the predicted MiHAs. The MiHA coding gene regions with flanks are arranged to a cassette in the order where there are no immunogenic flank junction sequences. It makes the mini-gene sequence shorter and prevents false positive results in the experimet.
 
+## Requirements
+* Linux or MacOS
+* python >= 3.5
+* netMHCpan >= 4.0
+* tcsh >= 6.18 (required for netMHCpan)
+
+## Installation
+Install netMHCpan program which was described in the paper: 
+J Immunol. 2017 Nov 1;199(9):3360-3368. doi: 10.4049/jimmunol.1700893. Epub 2017 Oct 4.
+
+Add path of the program to $PATH environment variable:
+export PATH=$PATH:/path/to/netMHCpan
+
+Download CassOpt using git:
+git clone https://github.com/open-projects/CassOpt
+
+Test CassOpt:
+cd ./CassOpt
+CassOpt.py -f ./test/input_file.fa
+
+
 ## Documentation
 
 Detailed description of CassOpt can be found in the [manual](https://github.com/open-projects/CassOpt/blob/master/UserManual.pdf)
