@@ -10,18 +10,18 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
 * tcsh >= 6.18 (required for netMHCpan)
 
 ## Installation
-Install netMHCpan program which was described in the paper: 
+Install netMHCpan program which was described in the paper: <br />
 J Immunol. 2017 Nov 1;199(9):3360-3368. doi: 10.4049/jimmunol.1700893. Epub 2017 Oct 4.
 
-Add path of the program to $PATH environment variable:
+Add path of the program to $PATH environment variable: <br />
 export PATH=$PATH:/path/to/netMHCpan
 
-Download CassOpt using git:
+Download CassOpt using git: <br />
 git clone https://github.com/open-projects/CassOpt
 
-Test CassOpt:
-cd ./CassOpt
-CassOpt.py -f ./test/input_file.fa
+Test CassOpt: <br />
+cd ./CassOpt <br />
+CassOpt.py -f ./test/input_file.fa <br />
 
 
 ## Documentation
