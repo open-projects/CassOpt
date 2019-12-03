@@ -1,4 +1,4 @@
-### The project was supported by RFBR (the RFBR project number is 17-04-02186).
+### The project was supported by RFBR (the RFBR project number 17-04-02186).
 
 # CassOpt (Cassette Optimizer)
 The program creates an optimized mini-gene translated sequence using a set of sub-sequences of predicted Minor Histocompatibility Antigenes (MiHA). The optimized mini-genes are used for experemental bulk validation of immunogenicity of predicted MiHAs. The translated MiHA coding gene regions with flanks are arranged to a cassette in the order where there are no immunogenic flank junction sequences. It shortens the translated mini-gene sequence and prevents false positive results of the experiments.
