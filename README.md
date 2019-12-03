@@ -10,7 +10,7 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
 * tcsh >= 6.18 (required for netMHCpan)
 
 ## Installation
-* install netMHCpan program which was described in the paper:
+* install netMHCpan program which was described in the paper (the default version of netMHCpan is 4.0):
 
   J Immunol. 2017 Nov 1;199(9):3360-3368. doi: 10.4049/jimmunol.1700893. Epub 2017 Oct 4.
 
@@ -26,7 +26,7 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
 
   cd ./CassOpt
 
-  CassOpt.py -f ./test/input_file.fa <br />
+  CassOpt.py -f ./test/input_file.fa
 
 
 ## Documentation
