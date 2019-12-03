@@ -27,6 +27,11 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
   cd ./CassOpt
 
   CassOpt.py -f ./test/input_file.fa
+  
+* if you have installed the other version of netMHCpan, for example netMHCpan3, use key -p with a correct name of netMHCpan:
+  
+  CassOpt.py -p netMHCpan3 -f ./test/input_file.fa
+  
 
 
 ## Documentation
