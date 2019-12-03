@@ -10,9 +10,11 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
 * tcsh >= 6.18 (required for netMHCpan)
 
 ## Installation
-* install netMHCpan program which was described in the paper (the default version of netMHCpan is 4.0):
+* install netMHCpan4 program which was described in the paper:
 
   J Immunol. 2017 Nov 1;199(9):3360-3368. doi: 10.4049/jimmunol.1700893. Epub 2017 Oct 4.
+  
+  (https://www.jimmunol.org/content/early/2017/10/04/jimmunol.1700893)
 
 * add path of the program to $PATH environment variable:
 
@@ -28,9 +30,9 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
 
   CassOpt.py -f ./test/input_file.fa
   
-* if you have installed the other version of netMHCpan, for example netMHCpan3, use key -p with a correct name of netMHCpan:
+* you can specify the path to netMHCpan4 program using the option -p:
   
-  CassOpt.py -p netMHCpan3 -f ./test/input_file.fa
+  CassOpt.py -p /path/to/netMHCpan4 -f ./test/input_file.fa
   
 
 
