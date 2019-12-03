@@ -11,6 +11,7 @@ The program creates an optimized mini-gene sequence using a set of nucleotide su
 
 ## Installation
 * install netMHCpan program which was described in the paper:
+
 J Immunol. 2017 Nov 1;199(9):3360-3368. doi: 10.4049/jimmunol.1700893. Epub 2017 Oct 4.
 
 * add path of the program to $PATH environment variable: <br />
