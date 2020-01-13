@@ -8,17 +8,23 @@ import sqlite3
 import itertools
 import sys
 
-sqlite_file = 'peptdb.sqlite'
+sqlite = 'peptdb.sqlite'
 
 def main():
-    input_parser = argparse.ArgumentParser(description='CassOpt: the program to build nonimmunogenic mini-gene cassettes.')
-    input_parser.add_argument('f', metavar='input_FASTA_file.fa', help='FASTA file of junction peptides; the fasta header format: >lName_rName_lPos_lIns_rIns_rPos')
-    input_parser.add_argument('p', metavar='input_netMHCpan_file.txt', help='netMHCpan output file')
+    input_parser = argparse.ArgumentParser(description='CaBuilder: the program to build nonimmunogenic cassettes of minigenes.')
+    input_parser.add_argument('f', metavar='FASTA_file.fa', help='FASTA file with peptides; the fasta header format: >lName_rName_lPos_lIns_rIns_rPos')
+    input_parser.add_argument('p', metavar='netMHCpan_file.txt', help='netMHCpan prediction file')
+    input_parser.add_argument('o', metavar='output_file.csv', help='output file')
+
     
     args = input_parser.parse_args()
-    fasta_file = args.f
-    pred_file = args.p
-    
+    fasta = args.f
+    pred = args.p
+    output = args.o
+    cabuild(sqlite, fasta, pred, output)
+# end of main()
+
+def cabuild(sqlite_file, fasta_file, pred_file, output_file):
     prediction = PredParser(pred_file)
     fasta = FastaParser(fasta_file)
     
@@ -114,38 +120,41 @@ def main():
     conn.execute("VACUUM")
     
     print("permutations: ", len(permutation))
-    for hla in hla_set:
-        cassettes = []
-        for names in permutation:
-            paths = []
-            for i in range(len(names) - 1):
-                l_name, r_name =  names[i], names[i + 1]
-                cursor.execute('''SELECT l_pos, r_pos
-                       FROM stealth_junctions
-                       WHERE hla = ? AND l_name = ? AND r_name = ?''', (hla, l_name, r_name))
-                path_ext = []
-                for l_pos, r_pos in cursor.fetchall():
-                    if i == 0:
-                        path_ext.append(Path(l_name, l_pos, r_name, r_pos))
+    with open(output_file, 'a') as out_file:
+        for hla in hla_set:
+            cassettes = []
+            for names in permutation:
+                paths = []
+                for i in range(len(names) - 1):
+                    l_name, r_name =  names[i], names[i + 1]
+                    cursor.execute('''SELECT l_pos, r_pos
+                           FROM stealth_junctions
+                           WHERE hla = ? AND l_name = ? AND r_name = ?''', (hla, l_name, r_name))
+                    path_ext = []
+                    for l_pos, r_pos in cursor.fetchall():
+                        if i == 0:
+                            path_ext.append(Path(l_name, l_pos, r_name, r_pos))
+                        else:
+                            for path in paths:
+                                path_copy = path.copy()
+                                path_copy.append(l_name, l_pos, r_name, r_pos)
+                                path_ext.append(path_copy)
+                    print(len(path_ext), file=sys.stderr)
+                    paths = path_ext
+                    if len(paths) == 0:
+                        break
+                if len(paths):
+                    cassettes.extend(paths)
+            for path in cassettes:
+                casstte_path = ''
+                for item in path.get():
+                    if len(casstte_path):
+                        casstte_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(item['r_name'])
                     else:
-                        for path in paths:
-                            path_copy = path.copy()
-                            path_copy.append(l_name, l_pos, r_name, r_pos)
-                            path_ext.append(path_copy)
-                print(len(path_ext), file=sys.stderr)
-                paths = path_ext
-                if len(paths) == 0:
-                    break
-            if len(paths):
-                cassettes.extend(paths)
-        for path in cassettes:
-            casstte_path = ''
-            for item in path.get():
-                if len(casstte_path):
-                    casstte_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(item['r_name'])
-                else:
-                    casstte_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
-            print(hla + "\t" + casstte_path)
+                        casstte_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
+                #print(hla + "\t" + casstte_path)
+                out_file.write(hla + "\t" + casstte_path + "\n")
+
 # end of main()
 
 class Path:
