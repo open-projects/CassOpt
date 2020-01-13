@@ -9,6 +9,9 @@ in_file = "./cassette_shuffle/cassette.fa"
 min_flank = 10
 pept_len = [8,9,10,11]
 
+def test():
+    print("Ok")
+
 def main():
     input_parser = argparse.ArgumentParser(description='CaShuff: the program for generation of the shuffled peptide junctions.')
     input_parser.add_argument('f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)')
@@ -16,12 +19,13 @@ def main():
     input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=float, default=10, help='min length of flanks', required=False)
     
     args = input_parser.parse_args()
-    in_file = args.f
-    pept_len = args.l
-    min_flank = args.m
-    
+    get_pept(args.f, args.l, args.m)
+# end of main()
+
+
+def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
     fasta = FastaParser(in_file)
-    output = Output()
+    output = Output(out_dir)
     comb = Combinator()
     for item in fasta.get():
         if len(item["seq"]) == 1:
@@ -46,8 +50,9 @@ def main():
                 peptide["r_flank_pos"])
             peptide = peptide["pept"]
             output.print2fasta(header, peptide)
-            print(header)
-            print(peptide)
+            if (print_console):
+                print(header)
+                print(peptide)
     output.close()
 # end of main()
 
