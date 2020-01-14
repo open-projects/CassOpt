@@ -46,11 +46,16 @@ def main():
     alleles = 'HLA-' + ',HLA-'.join(allele_set)
     pred_output = tmp_dir + '/binding.pred'
     fasta_solid = tmp_dir + '/peptides.fasta'
-    for len in pept_len:
-        fasta_input = "{}/peptides.{}.fa".format(tmp_dir, len)
-        command_string = "{} -l {} -a {} -f {} >> {}".format(predictor, len, alleles, fasta_input, pred_output)
-        print(command_string)
-        os.system(command_string)
+
+    with open(fasta_solid, 'w') as fsolid_file:
+        for len in pept_len:
+            fasta_input = "{}/peptides.{}.fa".format(tmp_dir, len)
+            with open(fasta_input, 'r') as finput_file:
+                fst = finput_file.read()
+                fsolid_file.write(fst)
+            command_string = "{} -l {} -a {} -f {} >> {}".format(predictor, len, alleles, fasta_input, pred_output)
+            print(command_string)
+            os.system(command_string)
     print('binding estimation is Ok')
 
     print('building cassete variants (it can take a long time):')
