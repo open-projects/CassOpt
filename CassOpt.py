@@ -44,7 +44,7 @@ def main():
 
     print('binding estimation (it can take a long time):')
     alleles = 'HLA-' + ',HLA-'.join(allele_set)
-    pred_output = out_dir + '/binding.pred'
+    pred_output = tmp_dir + '/binding.pred'
     fasta_solid = tmp_dir + '/peptides.fasta'
     for len in pept_len:
         fasta_input = "{}/peptides.{}.fa".format(tmp_dir, len)
@@ -55,7 +55,8 @@ def main():
 
     print('building cassete variants (it can take a long time):')
     sqldb = tmp_dir + '/peptdb.sqlite'
-    cabuilder.cabuild(sqldb, fasta_solid, pred_output)
+    cass_output = out_dir + '/cassettes.csv'
+    cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output)
     print('building cassete variants is Ok')
 
     print('removing peptides for ' + predictor + ': ', end='')
