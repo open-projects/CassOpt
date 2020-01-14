@@ -11,7 +11,7 @@ import sys
 sqlite = 'peptdb.sqlite'
 
 def main():
-    input_parser = argparse.ArgumentParser(description='CaBuilder: the program to build nonimmunogenic cassettes of minigenes.')
+    input_parser = argparse.ArgumentParser(description='CaBuilder: the program to build nonimmunogenic cassettes of mini-genes.')
     input_parser.add_argument('f', metavar='FASTA_file.fa', help='FASTA file with peptides; the fasta header format: >lName_rName_lPos_lIns_rIns_rPos')
     input_parser.add_argument('p', metavar='netMHCpan_file.txt', help='netMHCpan prediction file')
     input_parser.add_argument('o', metavar='output_file.csv', help='output file')
@@ -120,7 +120,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
     conn.execute("VACUUM")
     
     print("permutations: ", len(permutation))
-    with open(output_file, 'a') as out_file:
+    with open(output_file, 'w') as out_file:
         for hla in hla_set:
             cassettes = []
             for names in permutation:
