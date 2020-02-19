@@ -16,7 +16,6 @@ def main():
     input_parser.add_argument('p', metavar='netMHCpan_file.txt', help='netMHCpan prediction file')
     input_parser.add_argument('o', metavar='output_file.csv', help='output file')
 
-    
     args = input_parser.parse_args()
     fasta = args.f
     pred = args.p
@@ -66,32 +65,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
             
     cursor.executemany("INSERT INTO pept VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", pept_iter())
     conn.commit()
-    
-    start_name = ''
-    for l_node in left_nodes:
-        if l_node not in right_nodes:
-            start_name = l_node
-            break
-    if start_name == '':
-        exit("No Start!")
-        
-    stop_name = ''
-    for r_node in right_nodes:
-        if r_node not in left_nodes:
-            stop_name = r_node
-            break
-    inter_names = right_nodes
-    if stop_name != '':
-        inter_names.discard(stop_name)
-    
-    permutation = [] # all possible combinations of chunks
-    for inter in list(itertools.permutations(inter_names)):
-        names = [start_name]
-        names.extend(inter)
-        if stop_name != '':
-            names.append(stop_name)
-        permutation.append(names)
-    
+
     cursor.execute('''CREATE TABLE stealth_junctions_pept AS
                    SELECT hla, plen, l_name, r_name, l_pos, r_pos
                    FROM pept WHERE binder = 'NB'
@@ -107,7 +81,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
               r_name TEXT,
               l_pos INT,
               r_pos INT,
-              PRIMARY KEY (hla, l_name, r_name, l_pos, r_pos)
+              PRIMARY KEY (l_name, r_name, l_pos, r_pos, hla)
               )''')
     cursor.execute('''INSERT INTO stealth_junctions (hla, l_name, r_name, l_pos, r_pos)
                    SELECT hla, l_name, r_name, l_pos, r_pos
@@ -118,42 +92,75 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
     cursor.execute('''DROP TABLE stealth_junctions_pept''')
     conn.commit()
     conn.execute("VACUUM")
-    
-    print("permutations: ", len(permutation))
+
+    start_name = ''
+    for l_node in left_nodes:
+        if l_node not in right_nodes:
+            start_name = l_node
+            break
+    if start_name == '':
+        exit("No Start!")
+
+    stop_name = ''
+    for r_node in right_nodes:
+        if r_node not in left_nodes:
+            stop_name = r_node
+            break
+    inter_names = right_nodes
+    if stop_name != '':
+        inter_names.discard(stop_name)
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #permutation = []  # all possible combinations of chunks
+    #for inter in list(itertools.permutations(inter_names)):
+    #    names = [start_name]
+    #    names.extend(inter)
+    #    if stop_name != '':
+    #        names.append(stop_name)
+    #    permutation.append(names)
+
+    #print("permutations: ", len(permutation))
     with open(output_file, 'w') as out_file:
-        for hla in hla_set:
-            cassettes = []
-            for names in permutation:
-                paths = []
-                for i in range(len(names) - 1):
-                    l_name, r_name =  names[i], names[i + 1]
-                    cursor.execute('''SELECT l_pos, r_pos
-                           FROM stealth_junctions
-                           WHERE hla = ? AND l_name = ? AND r_name = ?''', (hla, l_name, r_name))
-                    path_ext = []
-                    for l_pos, r_pos in cursor.fetchall():
-                        if i == 0:
-                            path_ext.append(Path(l_name, l_pos, r_name, r_pos))
-                        else:
-                            for path in paths:
-                                path_copy = path.copy()
-                                path_copy.append(l_name, l_pos, r_name, r_pos)
-                                path_ext.append(path_copy)
-                    print(len(path_ext), file=sys.stderr)
-                    paths = path_ext
-                    if len(paths) == 0:
-                        break
-                if len(paths):
-                    cassettes.extend(paths)
-            for path in cassettes:
-                casstte_path = ''
+        cassettes = []
+        #for names in permutation:
+        k = 0
+        for inter in itertools.permutations(inter_names):
+            k =+ 1
+            names = [start_name]
+            names.extend(list(inter))
+            if stop_name != '':
+                names.append(stop_name)
+            path = Path()
+            hla_maxset = list(hla_set)
+            for i in range(len(names) - 1):
+                l_name, r_name =  names[i], names[i + 1]
+                sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
+                      "WHERE l_name = ? AND r_name = ? AND hla in ({hla}) " \
+                      "GROUP BY l_pos, r_pos " \
+                      "ORDER BY n DESC, l_pos, r_pos DESC LIMIT 1".format(hla=','.join(['?'] * len(hla_maxset)))
+                cursor.execute(sql, [l_name, r_name] + hla_maxset)
+                hla_maxset = list()
+                for l_pos, r_pos, n in cursor.fetchall():
+                    path.append(l_name, l_pos, r_name, r_pos)
+                    cursor_hla = conn.cursor()
+                    cursor_hla.execute("SELECT DISTINCT hla FROM stealth_junctions WHERE l_name = ? AND l_pos = ? AND r_name = ? AND r_pos = ?", (l_name, l_pos, r_name, r_pos))
+                    for hla, in cursor_hla.fetchall():
+                        hla_maxset.append(hla)
+                if len(hla_maxset) == 0:
+                    break
+                #print(len(hla_maxset), ' ', path.len(), file=sys.stderr)
+
+            if len(hla_maxset) > 0:
+                cassette_path = ''
                 for item in path.get():
-                    if len(casstte_path):
-                        casstte_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(item['r_name'])
+                    if len(cassette_path):
+                        cassette_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(item['r_name'])
                     else:
-                        casstte_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
-                #print(hla + "\t" + casstte_path)
-                out_file.write(hla + "\t" + casstte_path + "\n")
+                        cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
+
+                #print(','.join(hla_maxset) + "\t" + cassette_path)
+                out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
+            print("iteration: $".format(k))
 
 # end of main()
 
@@ -164,7 +171,7 @@ class Path:
             self._chain.append({'l_name': l_name, 'l_pos': l_pos, 'r_name': r_name, 'r_pos': r_pos})
     
     def append(self, l_name, l_pos, r_name, r_pos):
-        if self._chain[-1]['r_name'] == l_name:
+        if len(self._chain) == 0 or self._chain[-1]['r_name'] == l_name:
             self._chain.append({'l_name': l_name, 'l_pos': l_pos, 'r_name': r_name, 'r_pos': r_pos})
         else:
             raise ValueError('Wrong PATH: {}>{}..{}<{}!'.format(l_name, l_pos, r_pos, r_name))
@@ -180,6 +187,9 @@ class Path:
     
     def set(self, chain):
         self._chain = chain
+
+    def len(self):
+        return len(self._chain)
 # end of class PathFinder
 
 class PredParser:
@@ -229,7 +239,6 @@ class FastaParser:
     def get(self):
         return self._fasta.values()
 # end of class FastaParser
-
 
 if __name__ == "__main__":
     main()
