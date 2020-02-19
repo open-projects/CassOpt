@@ -16,22 +16,27 @@ def main():
     input_parser = argparse.ArgumentParser(description='CaShuff: the program for generation of the shuffled peptide junctions.')
     input_parser.add_argument('f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)')
     input_parser.add_argument('-l', metavar='PEPTIE_LENGTH', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
-    input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=float, default=10, help='min length of flanks', required=False)
+    input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=float, default=8, help='min length of flanks', required=False)
     
     args = input_parser.parse_args()
     get_pept(args.f, args.l, args.m)
 # end of main()
 
-
 def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
     fasta = FastaParser(in_file)
     output = Output(out_dir)
     comb = Combinator()
+    found_stop = 0
     for item in fasta.get():
         if len(item["seq"]) == 1:
             comb.append(item, 1, 0)
         elif re.search("\*$", item["seq"]):
-            comb.append(item, 0, 1)
+            if found_stop: # only one sequence with the 'stop' mark will be considered as the last sequence in a cassette
+                item["seq"] = re.sub(r'\*$', '', item["seq"])
+                comb.append(item, 0, 0)
+            else:
+                comb.append(item, 0, 1)
+                found_stop = 1
         else:
             comb.append(item, 0, 0)
     junctions = JunctionPept()
