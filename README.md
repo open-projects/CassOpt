@@ -28,7 +28,7 @@ The program creates the optimized cassette of translated mini-gene sequences usi
 
   cd ./CassOpt
 
-  CassOpt.py -f ./test/input_file.fa
+  CassOpt.py -f ./test/test.fa
   
 * you can specify the path to netMHCpan4 program using the option -p:
   
