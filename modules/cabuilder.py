@@ -154,7 +154,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
                 #print(','.join(hla_maxset) + "\t" + cassette_path)
                 out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
                 num_paths += 1
-            if k % 10 == 0:
+            if k % 1000 == 0:
                 print("iteration {} of {} ".format(k, m), end='', flush=True)
                 print('\r', end='')
     print(' ' * (len(str(k)) + len(str(m)) + 15) + "\r", end='', flush=True)
