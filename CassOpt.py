@@ -13,12 +13,13 @@ from modules import cabuilder
 
 def main():
     input_parser = argparse.ArgumentParser(description='CassOpt: the program for optimization of mini-gene cessetes.')
-    input_parser.add_argument('-f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)')
+    input_parser.add_argument('-f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)', required=True)
     input_parser.add_argument('-l', metavar='PEPTIDE_LENGTHS', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
     input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=int, default=8, help='min length of flanks', required=False)
     input_parser.add_argument('-a', metavar='HLA_ALLELES', nargs='+', default=['A02:01','B07:02'], help='HLA alleles', required=False)
-    input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='path to output directory', required=False)
-    input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='path to a binding predictor', required=False)
+    input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='path to the output directory', required=False)
+    input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='path to the binding predictor', required=False)
+    input_parser.add_argument('-k', action='store_true', help='keep temporary files intact', required=False)
 
     args = input_parser.parse_args()
     in_file = args.f
@@ -27,7 +28,11 @@ def main():
     min_flank = args.m
     out_dir = args.o
     predictor = args.p
+    keep_tmp = args.k
+
     tmp_dir = out_dir + '/tmp'
+    if os.path.exists(tmp_dir):
+        shutil.rmtree(tmp_dir)
 
     if predictor == 'netMHCpan4' and not check_tcsh():
         exit("tcsh program is not installed, please install it (netMHCpan4 uses tcsh)\n")
@@ -38,11 +43,11 @@ def main():
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    print('preparing peptides for ' + predictor + ': ', end='')
+    print('preparation of junction peptides for ' + predictor + ': ', end='')
     cashuff.get_pept(in_file, pept_len, min_flank, tmp_dir)
     print('Ok')
 
-    print('finding of binders (it can take a long time):')
+    print('finding the binders (it can take a long time):')
     alleles = 'HLA-' + ',HLA-'.join(allele_set)
     pred_output = tmp_dir + '/binding.pred'
     fasta_solid = tmp_dir + '/peptides.fasta'
@@ -56,16 +61,17 @@ def main():
             command_string = "{} -l {} -a {} -f {} >> {}".format(predictor, len, alleles, fasta_input, pred_output)
             print(command_string)
             os.system(command_string)
-    print('binding estimation is Ok')
+    print('strong and weak binders are found')
 
-    print('building cassete variants (it can take a long time):')
+    print('building the cassette (it can take a long time):')
     sqldb = tmp_dir + '/peptdb.sqlite'
     cass_output = out_dir + '/cassettes.csv'
-    cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output)
-    print('building cassete variants is Ok')
+    n_path = cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output)
+    print('found {} cassette variants'.format(n_path))
 
-    print('removing peptides for ' + predictor + ': ', end='')
-    shutil.rmtree(tmp_dir)
+    if not keep_tmp:
+        print('clean temporary files ...')
+        shutil.rmtree(tmp_dir)
     print('...done')
 # end of main
 
