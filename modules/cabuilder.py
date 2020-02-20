@@ -3,10 +3,10 @@
 import re
 import argparse
 import os
+import math
 
 import sqlite3
 import itertools
-import sys
 
 sqlite = 'peptdb.sqlite'
 
@@ -32,7 +32,9 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
     
     left_nodes = set()
     right_nodes = set()
-    
+
+    num_paths = 0
+
     if os.path.isfile(sqlite_file):
         os.remove(sqlite_file)
     conn = sqlite3.connect(sqlite_file)
@@ -70,7 +72,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
                    SELECT hla, plen, l_name, r_name, l_pos, r_pos
                    FROM pept WHERE binder = 'NB'
                    GROUP BY hla, plen, l_name, r_name, l_pos, r_pos
-                   HAVING COUNT(DISTINCT l_ins || "_" || r_ins) = plen - 1 OR l_name = "START"''')
+                   HAVING COUNT(DISTINCT l_ins || "_" || r_ins) = plen - 1 OR l_name IN ("START","start")''')
     
     cursor.execute('''SELECT COUNT(DISTINCT plen) FROM stealth_junctions_pept''')
     len_num = cursor.fetchone()
@@ -110,22 +112,13 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
     if stop_name != '':
         inter_names.discard(stop_name)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #permutation = []  # all possible combinations of chunks
-    #for inter in list(itertools.permutations(inter_names)):
-    #    names = [start_name]
-    #    names.extend(inter)
-    #    if stop_name != '':
-    #        names.append(stop_name)
-    #    permutation.append(names)
-
-    #print("permutations: ", len(permutation))
     with open(output_file, 'w') as out_file:
         cassettes = []
         #for names in permutation:
         k = 0
+        m = math.factorial(len(inter_names))
         for inter in itertools.permutations(inter_names):
-            k =+ 1
+            k = k + 1
             names = [start_name]
             names.extend(list(inter))
             if stop_name != '':
@@ -160,8 +153,12 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
 
                 #print(','.join(hla_maxset) + "\t" + cassette_path)
                 out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
-            print("iteration: $".format(k))
-
+                num_paths += 1
+            if k % 10 == 0:
+                print("iteration {} of {} ".format(k, m), end='', flush=True)
+                print('\r', end='')
+    print(' ' * (len(str(k)) + len(str(m)) + 15) + "\r", end='', flush=True)
+    return num_paths
 # end of main()
 
 class Path:
@@ -200,7 +197,7 @@ class PredParser:
         sb = {}
         wb = {}
         with open(self._pred) as pred:
-            parser = re.compile(" *\d+ +(HLA-\S+) +([A-Z]{8,}) +\S+ +\d+ +\d+ +\d+ +\d+ +\d+ +\S+ +\S+ +[0-9.]+ +[0-9.]+(?:.*([SW]B))?")
+            parser = re.compile(" *\d+ +(HLA-\S+) +([GPAVLIMCFYWHKRQNEDST]{8,}) +\S+ +\d+ +\d+ +\d+ +\d+ +\d+ +\S+ +\S+ +[0-9.]+ +[0-9.]+(?:.*([SW]B))?") # !!!important: 'X' MUST BE EXCLUDED, IT USES AS DUMMY START
             for line in pred:
                 match = parser.match(line)
                 if match:
