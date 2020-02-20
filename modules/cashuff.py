@@ -29,8 +29,8 @@ def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
     found_stop = 0
     for item in fasta.get():
         if len(item["seq"]) == 1:
-            comb.append(item, 1, 0)
-        elif re.search("\*$", item["seq"]):
+            comb.append(item, 1, 0) # START
+        elif re.search("\*$", item["seq"]): # STOP
             if found_stop: # only one sequence with the 'stop' mark will be considered as the last sequence in a cassette
                 item["seq"] = re.sub(r'\*$', '', item["seq"])
                 comb.append(item, 0, 0)
@@ -115,7 +115,7 @@ class Combinator:
                     next
                 else:
                     if not item_i["end"] and not item_j["beg"]:
-                        if len(comb) > 2 and item_i["beg"] and item_j["end"]:
+                        if len(self._array) > 2 and item_i["beg"] and item_j["end"]:
                             next
                         else:
                             comb.append([item_i["item"], item_j["item"]])
