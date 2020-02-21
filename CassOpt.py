@@ -68,7 +68,7 @@ def main():
     print('building the cassette (it can take a long time):')
     sqldb = tmp_dir + '/peptdb.sqlite'
     cass_output = out_dir + '/cassettes.csv'
-    n_path = cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output, flex_mode, n_var)
+    n_path = cabuilder.cabuild(sqldb, in_file, fasta_solid, pred_output, cass_output, flex_mode, n_var)
     print('found {} cassette variants'.format(n_path))
 
     if not keep_tmp:
