@@ -15,7 +15,7 @@ def main():
     input_parser.add_argument('-l', metavar='PEPTIDE_LENGTHS', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
     input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=int, default=8, help='min length of flanks', required=False)
     input_parser.add_argument('-a', metavar='HLA_ALLELES', nargs='+', default=['A02:01','B07:02'], help='HLA alleles', required=False)
-    input_parser.add_argument('-x', action='store_true', help='fleXible mode: use subset of HLA if there is no any variants for full set of HLA', required=False)
+    input_parser.add_argument('-x', action='store_true', help='fleXible mode: use subset of HLA in addition to full set of HLA', required=False)
     input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='path to the output directory', required=False)
     input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='path to the binding predictor', required=False)
     input_parser.add_argument('-k', action='store_true', help='keep temporary files intact', required=False)
