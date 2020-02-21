@@ -154,10 +154,10 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
                 #print(','.join(hla_maxset) + "\t" + cassette_path)
                 out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
                 num_paths += 1
-            if k % 1000 == 0:
-                print("iteration {} of {} ".format(k, m), end='', flush=True)
+            if k % 100 == 0:
+                print("iteration {} of {} ({}%), found {} variants".format(k, m, int(k/m*100), num_paths), end='', flush=True)
                 print('\r', end='')
-    print(' ' * (len(str(k)) + len(str(m)) + 15) + "\r", end='', flush=True)
+    print(' ' * (len(str(k)) + len(str(m)) + len(str(num_paths)) + 40) + "\r", end='', flush=True)
     return num_paths
 # end of main()
 
