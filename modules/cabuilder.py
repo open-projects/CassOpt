@@ -23,7 +23,7 @@ def main():
     cabuild(sqlite, fasta, pred, output)
 # end of main()
 
-def cabuild(sqlite_file, fasta_file, pred_file, output_file):
+def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode):
     prediction = PredParser(pred_file)
     fasta = FastaParser(fasta_file)
     
@@ -124,36 +124,71 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file):
             if stop_name != '':
                 names.append(stop_name)
             path = Path()
-            hla_maxset = list(hla_set)
-            for i in range(len(names) - 1):
-                l_name, r_name =  names[i], names[i + 1]
+
+            if flexible_mode:
+                hla_maxset = list(hla_set)
+                for i in range(len(names) - 1):
+                    l_name, r_name =  names[i], names[i + 1]
+                    sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
+                          "WHERE l_name = ? AND r_name = ? AND hla in ({hla}) " \
+                          "GROUP BY l_pos, r_pos " \
+                          "ORDER BY n DESC, l_pos, r_pos DESC LIMIT 1".format(hla=','.join(['?'] * len(hla_maxset)))
+                    cursor.execute(sql, [l_name, r_name] + hla_maxset)
+
+                    for l_pos, r_pos, n in cursor.fetchall():
+                        path.append(l_name, l_pos, r_name, r_pos)
+                        cursor_hla = conn.cursor()
+                        sql = "SELECT DISTINCT hla FROM stealth_junctions WHERE l_name = ? AND l_pos = ? AND r_name = ? AND r_pos = ? AND hla in ({hla})".format(hla=','.join(['?'] * len(hla_maxset)))
+                        cursor_hla.execute(sql, [l_name, l_pos, r_name, r_pos] + hla_maxset)
+                        hla_maxset = list()
+                        for hla, in cursor_hla.fetchall():
+                            hla_maxset.append(hla)
+                    if len(hla_maxset) == 0:
+                        break
+                    #print(len(hla_maxset), ' ', path.len(), file=sys.stderr)
+
+                if len(hla_maxset) > 0:
+                    cassette_path = ''
+                    for item in path.get():
+                        if len(cassette_path):
+                            cassette_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(item['r_name'])
+                        else:
+                            cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
+
+                    #print(','.join(hla_maxset) + "\t" + cassette_path)
+                    out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
+                    num_paths += 1
+            else:
+                in_path = 0
+                n_hla = len(hla_set)
                 sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
-                      "WHERE l_name = ? AND r_name = ? AND hla in ({hla}) " \
-                      "GROUP BY l_pos, r_pos " \
-                      "ORDER BY n DESC, l_pos, r_pos DESC LIMIT 1".format(hla=','.join(['?'] * len(hla_maxset)))
-                cursor.execute(sql, [l_name, r_name] + hla_maxset)
-                hla_maxset = list()
-                for l_pos, r_pos, n in cursor.fetchall():
-                    path.append(l_name, l_pos, r_name, r_pos)
-                    cursor_hla = conn.cursor()
-                    cursor_hla.execute("SELECT DISTINCT hla FROM stealth_junctions WHERE l_name = ? AND l_pos = ? AND r_name = ? AND r_pos = ?", (l_name, l_pos, r_name, r_pos))
-                    for hla, in cursor_hla.fetchall():
-                        hla_maxset.append(hla)
-                if len(hla_maxset) == 0:
-                    break
-                #print(len(hla_maxset), ' ', path.len(), file=sys.stderr)
+                      "WHERE l_name = ? AND r_name = ? " \
+                      "GROUP BY l_pos, r_pos HAVING n = ?" \
+                      "ORDER BY n DESC, l_pos, r_pos DESC LIMIT 1"
+                for i in range(len(names) - 1):
+                    l_name, r_name =  names[i], names[i + 1]
+                    cursor.execute(sql, [l_name, r_name, n_hla])
+                    in_path = 0
+                    for l_pos, r_pos, n in cursor.fetchall():
+                        path.append(l_name, l_pos, r_name, r_pos)
+                        in_path = 1
+                    if not in_path:
+                        break
 
-            if len(hla_maxset) > 0:
-                cassette_path = ''
-                for item in path.get():
-                    if len(cassette_path):
-                        cassette_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(item['r_name'])
-                    else:
-                        cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
+                if in_path:
+                    cassette_path = ''
+                    for item in path.get():
+                        if len(cassette_path):
+                            cassette_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(
+                                item['r_name'])
+                        else:
+                            cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + \
+                                            item['r_name']
 
-                #print(','.join(hla_maxset) + "\t" + cassette_path)
-                out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
-                num_paths += 1
+                    # print("full_set\t" + cassette_path)
+                    out_file.write("full_set\t" + cassette_path + "\n")
+                    num_paths += 1
+
             if k % 100 == 0:
                 print("iteration {} of {} ({}%), found {} variants".format(k, m, int(k/m*100), num_paths), end='', flush=True)
                 print('\r', end='')
