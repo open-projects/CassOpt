@@ -18,6 +18,7 @@ def main():
     input_parser.add_argument('-x', action='store_true', help='fleXible mode: use subset of HLA in addition to full set of HLA', required=False)
     input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='path to the output directory', required=False)
     input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='path to the binding predictor', required=False)
+    input_parser.add_argument('-n', type=int, default=0, help="print the first n variants (it doesn't guarantee the printing of optimal variants); 0 - print all found variants (default)", required=False)
     input_parser.add_argument('-k', action='store_true', help='keep temporary files intact', required=False)
 
     args = input_parser.parse_args()
@@ -28,6 +29,7 @@ def main():
     min_flank = args.m
     out_dir = args.o
     predictor = args.p
+    n_var = args.n
     keep_tmp = args.k
 
     tmp_dir = out_dir + '/tmp'
@@ -66,7 +68,7 @@ def main():
     print('building the cassette (it can take a long time):')
     sqldb = tmp_dir + '/peptdb.sqlite'
     cass_output = out_dir + '/cassettes.csv'
-    n_path = cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output, flex_mode)
+    n_path = cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output, flex_mode, n_var)
     print('found {} cassette variants'.format(n_path))
 
     if not keep_tmp:
