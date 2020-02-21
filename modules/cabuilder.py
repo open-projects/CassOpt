@@ -8,6 +8,8 @@ import math
 import sqlite3
 import itertools
 
+from modules import fparser
+
 sqlite = 'peptdb.sqlite'
 
 def main():
@@ -23,7 +25,7 @@ def main():
     cabuild(sqlite, fasta, pred, output)
 # end of main()
 
-def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode, n_var):
+def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexible_mode, n_var):
     prediction = PredParser(pred_file)
     fasta = FastaParser(fasta_file)
     
@@ -112,6 +114,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode, n_va
     if stop_name != '':
         inter_names.discard(stop_name)
 
+    cass_fasta = Cass2Fasta(input_file, output_file + '.fa')
     with open(output_file, 'w') as out_file:
         cassettes = []
         #for names in permutation:
@@ -189,6 +192,7 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode, n_va
 
                     # print("full_set\t" + cassette_path)
                     out_file.write("full_set\t" + cassette_path + "\n")
+                    cass_fasta.write(cassette_path)
                     num_paths += 1
                     if n_var > 0 and num_paths >= n_var:
                         break
@@ -199,6 +203,37 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode, n_va
     print(' ' * (len(str(k)) + len(str(m)) + len(str(num_paths)) + 40) + "\r", end='', flush=True)
     return num_paths
 # end of main()
+
+class Cass2Fasta:
+    def __init__(self, input_file, output_file):
+        self._infile = input_file
+        self._outfile = output_file
+
+    def write(self, cassette):
+        fasta = fparser.FastaParser(self._infile)
+        with open(self._outfile, 'w') as out_file:
+            out_file.write(">" + cassette + "\n")
+            for pept in cassette.split("|"):
+                p_pattern = re.match("(?:(\d+)<)?([^<>]+)(?:>(\d+))?", pept)
+                if p_pattern:
+                    cbeg = p_pattern.group(1)
+                    name = p_pattern.group(2)
+                    cend = p_pattern.group(3)
+                else:
+                    raise Exception("Cass2Fasta: wrong cassette format")
+                item = fasta.get(name)
+                if not item:
+                    raise Exception("Cass2Fasta: can't find a header in the fasta file")
+
+
+                seq = item["seq"][:item["beg"]-1].lower() + item["seq"][item["beg"]-1:item["end"]].upper() + item["seq"][item["end"]:].lower()
+                cbeg = int(cbeg) if cbeg else 1
+                cend = int(cend) if cend else len(seq)
+                cass_seq = seq[cbeg-1:cend]
+                if len(cass_seq) < 1:
+                    raise Exception("Cass2Fasta: a zero length peptide is found")
+                out_file.write(cass_seq + "\n")
+# end of class Cass2Fasta
 
 class Path:
     def __init__(self, l_name=None, l_pos=0, r_name=None, r_pos=0):
