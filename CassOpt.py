@@ -10,7 +10,7 @@ from modules import cashuff
 from modules import cabuilder
 
 def main():
-    input_parser = argparse.ArgumentParser(description='CassOpt: the program for optimization of mini-gene cessetes.')
+    input_parser = argparse.ArgumentParser(description='CassOpt: the program for optimization of mini-gene cassettes.')
     input_parser.add_argument('-f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)', required=True)
     input_parser.add_argument('-l', metavar='PEPTIDE_LENGTHS', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
     input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=int, default=8, help='min length of flanks', required=False)
