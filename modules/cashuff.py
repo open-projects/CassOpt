@@ -4,6 +4,8 @@ import re
 import argparse
 import os
 
+from modules import fparser
+
 
 in_file = "./cassette_shuffle/cassette.fa"
 min_flank = 10
@@ -23,7 +25,7 @@ def main():
 # end of main()
 
 def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
-    fasta = FastaParser(in_file)
+    fasta = fparser.FastaParser(in_file)
     output = Output(out_dir)
     comb = Combinator()
     found_stop = 0
@@ -80,25 +82,6 @@ class Output:
         for f in self._out.values():
             f.close()
 # end of class Output
-
-class FastaParser:
-    def __init__(self, file_name):
-        self._fasta = {}
-        with open(file_name, "r") as infile:
-            header = ""
-            for line in infile:
-                line = line.strip()
-                h_pattern = re.match(">(\S+)\D+(\d+)\.\.(\d+)", line)
-                if h_pattern:
-                    header = h_pattern.group(1)
-                    self._fasta[header] = {"name": header, "beg": int(h_pattern.group(2)), "end": int(h_pattern.group(3)), "seq": ""}
-                elif header:
-                    self._fasta[header]["seq"] += re.sub("[^A-Za-z*]", "", line)
-                else:
-                    raise ValueError('Wrong FASTA format!')
-    def get(self):
-        return self._fasta.values()
-# end of class FastaParser
 
 class Combinator:
     def __init__(self):
