@@ -23,7 +23,7 @@ def main():
     cabuild(sqlite, fasta, pred, output)
 # end of main()
 
-def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode):
+def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode, n_var):
     prediction = PredParser(pred_file)
     fasta = FastaParser(fasta_file)
     
@@ -158,6 +158,8 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode):
                     #print(','.join(hla_maxset) + "\t" + cassette_path)
                     out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
                     num_paths += 1
+                    if n_var > 0 and num_paths >= n_var:
+                        break
             else:
                 in_path = 0
                 n_hla = len(hla_set)
@@ -188,6 +190,8 @@ def cabuild(sqlite_file, fasta_file, pred_file, output_file, flexible_mode):
                     # print("full_set\t" + cassette_path)
                     out_file.write("full_set\t" + cassette_path + "\n")
                     num_paths += 1
+                    if n_var > 0 and num_paths >= n_var:
+                        break
 
             if k % 100 == 0:
                 print("iteration {} of {} ({}%), found {} variants".format(k, m, int(k/m*100), num_paths), end='', flush=True)
