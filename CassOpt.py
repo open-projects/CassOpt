@@ -5,11 +5,9 @@ import re
 import argparse
 import shutil
 import string
-import glob
 
 from modules import cashuff
 from modules import cabuilder
-
 
 def main():
     input_parser = argparse.ArgumentParser(description='CassOpt: the program for optimization of mini-gene cessetes.')
@@ -17,6 +15,7 @@ def main():
     input_parser.add_argument('-l', metavar='PEPTIDE_LENGTHS', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
     input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=int, default=8, help='min length of flanks', required=False)
     input_parser.add_argument('-a', metavar='HLA_ALLELES', nargs='+', default=['A02:01','B07:02'], help='HLA alleles', required=False)
+    input_parser.add_argument('-x', action='store_true', help='fleXible mode: use subset of HLA if there is no any variants for full set of HLA', required=False)
     input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='path to the output directory', required=False)
     input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='path to the binding predictor', required=False)
     input_parser.add_argument('-k', action='store_true', help='keep temporary files intact', required=False)
@@ -25,6 +24,7 @@ def main():
     in_file = args.f
     pept_len = args.l
     allele_set = args.a
+    flex_mode = args.x
     min_flank = args.m
     out_dir = args.o
     predictor = args.p
@@ -66,7 +66,7 @@ def main():
     print('building the cassette (it can take a long time):')
     sqldb = tmp_dir + '/peptdb.sqlite'
     cass_output = out_dir + '/cassettes.csv'
-    n_path = cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output)
+    n_path = cabuilder.cabuild(sqldb, fasta_solid, pred_output, cass_output, flex_mode)
     print('found {} cassette variants'.format(n_path))
 
     if not keep_tmp:
