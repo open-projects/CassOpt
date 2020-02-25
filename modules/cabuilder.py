@@ -53,7 +53,12 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
               l_ins INT,
               r_ins INT
               )''')
-              
+
+    #with open('pept.test', 'w') as ff:
+    #    for pept in fasta.get():
+    #        ff.write(pept["seq"] + "\n")
+    #print("test")
+
     def pept_iter():
         for hla in hla_set:
             for pept in fasta.get():
@@ -65,7 +70,8 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                 
                 left_nodes.add(pept["l_name"])
                 right_nodes.add(pept["r_name"])
-                yield hla, binder, len(pept["seq"]), pept["seq"], pept["l_name"], pept["r_name"], pept["l_pos"], pept["r_pos"], pept["l_ins"], pept["r_ins"]
+
+                yield hla, binder, pept["len"], pept["seq"], pept["l_name"], pept["r_name"], pept["l_pos"], pept["r_pos"], pept["l_ins"], pept["r_ins"]
             
     cursor.executemany("INSERT INTO pept VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", pept_iter())
     conn.commit()
@@ -114,7 +120,7 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
     if stop_name != '':
         inter_names.discard(stop_name)
 
-    cass_fasta = Cass2Fasta(input_file, output_file + '.fa')
+    cass_fasta = Cass2Fasta(input_file)
     with open(output_file, 'w') as out_file:
         cassettes = []
         #for names in permutation:
@@ -191,9 +197,10 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                                             item['r_name']
 
                     # print("full_set\t" + cassette_path)
-                    out_file.write("full_set\t" + cassette_path + "\n")
-                    cass_fasta.write(cassette_path)
                     num_paths += 1
+                    out_file.write("{}\tfull_set\t{}\n".format(num_paths, cassette_path))
+                    cass_fasta.write(cassette_path, output_file + '.' + str(num_paths) + '.fa')
+
                     if n_var > 0 and num_paths >= n_var:
                         break
 
@@ -205,13 +212,11 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
 # end of main()
 
 class Cass2Fasta:
-    def __init__(self, input_file, output_file):
-        self._infile = input_file
-        self._outfile = output_file
+    def __init__(self, input_file):
+        self._fasta = fparser.FastaParser(input_file)
 
-    def write(self, cassette):
-        fasta = fparser.FastaParser(self._infile)
-        with open(self._outfile, 'w') as out_file:
+    def write(self, cassette, output_file):
+        with open(output_file, 'w') as out_file:
             out_file.write(">" + cassette + "\n")
             for pept in cassette.split("|"):
                 p_pattern = re.match("(?:(\d+)<)?([^<>]+)(?:>(\d+))?", pept)
@@ -221,7 +226,7 @@ class Cass2Fasta:
                     cend = p_pattern.group(3)
                 else:
                     raise Exception("Cass2Fasta: wrong cassette format")
-                item = fasta.get(name)
+                item = self._fasta.get(name)
                 if not item:
                     raise Exception("Cass2Fasta: can't find a header in the fasta file")
 
@@ -233,6 +238,7 @@ class Cass2Fasta:
                 if len(cass_seq) < 1:
                     raise Exception("Cass2Fasta: a zero length peptide is found")
                 out_file.write(cass_seq + "\n")
+        return
 # end of class Cass2Fasta
 
 class Path:
@@ -302,7 +308,10 @@ class FastaParser:
                 if h_pattern:
                     header = h_pattern.group(1)
                     h = re.split("_", header)
-                    self._fasta[header] = {"l_name": h[0], "r_name": h[1], "l_pos": int(h[2]), "l_ins": int(h[3]), "r_ins": int(h[4]), "r_pos": int(h[5]), "seq": ""}
+                    if len(h) == 7:
+                        self._fasta[header] = {"l_name": h[0], "r_name": h[1], "l_pos": int(h[2]), "l_ins": int(h[3]), "r_ins": int(h[4]), "r_pos": int(h[5]), "len": int(h[6]), "seq": ""}
+                    else:
+                        raise ValueError('Wrong FASTA header format!')
                 elif header:
                     self._fasta[header]["seq"] += re.sub("[^A-Za-z*]", "", line)
                 else:
