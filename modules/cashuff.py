@@ -48,18 +48,18 @@ def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
         if len(seq_1) == 1: # START
             end_1 = 0
         for peptide in junctions.get(seq_1, end_1, seq_2, beg_2, min_flank, pept_len):
-            header = ">{}_{}_{}_{}_{}_{}".format(
+            header = ">{}_{}_{}_{}_{}_{}_{}".format(
                 combination[0]["name"],
                 combination[1]["name"],
                 peptide["l_flank_pos"],
                 peptide["l_insert_pos"],
                 peptide["r_insert_pos"],
-                peptide["r_flank_pos"])
-            peptide = peptide["pept"]
-            output.print2fasta(header, peptide)
+                peptide["r_flank_pos"],
+                len(peptide["pept"]))
+            output.print2fasta(header, peptide["pept"])
             if (print_console):
                 print(header)
-                print(peptide)
+                print(peptide["pept"])
     output.close()
 # end of main()
 
