@@ -11,13 +11,14 @@ from modules import cabuilder
 
 def main():
     input_parser = argparse.ArgumentParser(description='CassOpt: the program for optimization of mini-gene cassettes.')
-    input_parser.add_argument('-f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)', required=True)
+    input_parser.add_argument('-f', metavar='input_file.fa', help='the FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)', required=True)
     input_parser.add_argument('-l', metavar='PEPTIDE_LENGTHS', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
     input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=int, default=8, help='min length of flanks', required=False)
-    input_parser.add_argument('-a', metavar='HLA_ALLELES', nargs='+', default=['A02:01','B07:02'], help='HLA alleles', required=False)
+    input_parser.add_argument('-a', metavar='HLA_ALLELES', nargs='+', default=['HLA-A02:01','B07:02'], help='HLA alleles', required=False)
+    input_parser.add_argument('-s', metavar='HLA_file.txt', help='the file with a list of HLA alleles', required=False)
     input_parser.add_argument('-x', action='store_true', help='fleXible mode: use subset of HLA in addition to full set of HLA', required=False)
-    input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='path to the output directory', required=False)
-    input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='path to the binding predictor', required=False)
+    input_parser.add_argument('-o', metavar='/path/to/output_dir', default='output', help='the path to the output directory', required=False)
+    input_parser.add_argument('-p', metavar='/path/to/predictor', default='netMHCpan4', help='the path to the binding predictor', required=False)
     input_parser.add_argument('-n', type=int, default=0, help="print the first n variants (it doesn't guarantee the printing of optimal variants); 0 - print all found variants (default)", required=False)
     input_parser.add_argument('-k', action='store_true', help='keep temporary files intact', required=False)
 
@@ -25,6 +26,7 @@ def main():
     in_file = args.f
     pept_len = args.l
     allele_set = args.a
+    allele_set_file = args.s
     flex_mode = args.x
     min_flank = args.m
     out_dir = args.o
@@ -50,17 +52,28 @@ def main():
     print('Ok')
 
     print('finding the binders (it can take a long time):')
-    alleles = 'HLA-' + ',HLA-'.join(allele_set)
     pred_output = tmp_dir + '/binding.pred'
     fasta_solid = tmp_dir + '/peptides.fasta'
 
+    if allele_set_file:
+        allele_set = []
+        with open(allele_set_file, 'r') as hla_file:
+            for hla in hla_file:
+                hla = hla.strip()
+                if len(hla):
+                    allele_set.append(hla)
+    allele_set = [re.sub(r'^HLA-', '', allele, flags=re.IGNORECASE) for allele in allele_set]
+    alleles = 'HLA-' + ',HLA-'.join(allele_set)
+
+
+
     with open(fasta_solid, 'w') as fsolid_file:
-        for len in pept_len:
-            fasta_input = "{}/peptides.{}.fa".format(tmp_dir, len)
+        for l in pept_len:
+            fasta_input = "{}/peptides.{}.fa".format(tmp_dir, l)
             with open(fasta_input, 'r') as finput_file:
                 fst = finput_file.read()
                 fsolid_file.write(fst)
-            command_string = "{} -l {} -a {} -f {} >> {}".format(predictor, len, alleles, fasta_input, pred_output)
+            command_string = "{} -l {} -a {} -f {} | grep '<=' >> {}".format(predictor, l, alleles, fasta_input, pred_output)
             print(command_string)
             os.system(command_string)
     print('strong and weak binders are found')
