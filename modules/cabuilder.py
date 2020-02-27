@@ -277,7 +277,7 @@ class PredParser:
         sb = {}
         wb = {}
         with open(self._pred) as pred:
-            parser = re.compile(" *\d+ +(HLA-\S+) +([GPAVLIMCFYWHKRQNEDST]{8,}) +\S+ +\d+ +\d+ +\d+ +\d+ +\d+ +\S+ +\S+ +[0-9.]+ +[0-9.]+(?:.*([SW]B))?") # !!!important: 'X' MUST BE EXCLUDED, IT USES AS DUMMY START
+            parser = re.compile(" *\d+ +(HLA-\S+) +([GPAVLIMCFYWHKRQNEDST]{8,}) +\S+ +\d+ +\d+ +\d+ +\d+ +\d+ +\S+ +\S+ +[0-9.]+ +[0-9.]+(?:.*([SW]B))?") # !!!important: 'X' MUST BE EXCLUDED, IT'S USED AS A DUMMY START
             for line in pred:
                 match = parser.match(line)
                 if match:
