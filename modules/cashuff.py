@@ -1,28 +1,7 @@
-#!/usr/bin/env python3
-
 import re
-import argparse
 import os
 
 from modules import fparser
-
-
-in_file = "./cassette_shuffle/cassette.fa"
-min_flank = 10
-pept_len = [8,9,10,11]
-
-def test():
-    print("Ok")
-
-def main():
-    input_parser = argparse.ArgumentParser(description='CaShuff: the program for generation of the shuffled peptide junctions.')
-    input_parser.add_argument('f', metavar='input_file.fa', help='FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)')
-    input_parser.add_argument('-l', metavar='PEPTIE_LENGTH', nargs='+', type=int, default=[8,9,10,11], help='lengths of peptides', required=False)
-    input_parser.add_argument('-m', metavar='MIN_FLANKS_LENGTH', type=float, default=8, help='min length of flanks', required=False)
-    
-    args = input_parser.parse_args()
-    get_pept(args.f, args.l, args.m)
-# end of main()
 
 def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
     fasta = fparser.FastaParser(in_file)
@@ -61,7 +40,7 @@ def get_pept(in_file, pept_len, min_flank, out_dir='..', print_console=0):
                 print(header)
                 print(peptide["pept"])
     output.close()
-# end of main()
+# end of get_pept()
 
 class Output:
     def __init__(self, dir_name='.'):
@@ -138,5 +117,3 @@ class JunctionPept:
         return peptides
 # end of class JunctionPept
 
-if __name__ == '__main__':
-    main()
