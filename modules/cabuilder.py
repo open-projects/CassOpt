@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-
 import re
-import argparse
 import os
 import math
 
@@ -10,22 +7,7 @@ import itertools
 
 from modules import fparser
 
-sqlite = 'peptdb.sqlite'
-
-def main():
-    input_parser = argparse.ArgumentParser(description='CaBuilder: the program to build nonimmunogenic cassettes of mini-genes.')
-    input_parser.add_argument('f', metavar='FASTA_file.fa', help='FASTA file with peptides; the fasta header format: >lName_rName_lPos_lIns_rIns_rPos')
-    input_parser.add_argument('p', metavar='netMHCpan_file.txt', help='netMHCpan prediction file')
-    input_parser.add_argument('o', metavar='output_file.csv', help='output file')
-
-    args = input_parser.parse_args()
-    fasta = args.f
-    pred = args.p
-    output = args.o
-    cabuild(sqlite, fasta, pred, output)
-# end of main()
-
-def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexible_mode, n_var):
+def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexible_mode, n_var, hla_num):
     prediction = PredParser(pred_file)
     fasta = FastaParser(fasta_file)
     
@@ -122,7 +104,6 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
 
     cass_fasta = Cass2Fasta(input_file)
     with open(output_file, 'w') as out_file:
-        cassettes = []
         #for names in permutation:
         k = 0
         m = math.factorial(len(inter_names))
@@ -154,9 +135,8 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                             hla_maxset.append(hla)
                     if len(hla_maxset) == 0:
                         break
-                    #print(len(hla_maxset), ' ', path.len(), file=sys.stderr)
 
-                if len(hla_maxset) > 0:
+                if len(hla_maxset) > hla_num:
                     cassette_path = ''
                     for item in path.get():
                         if len(cassette_path):
@@ -164,9 +144,10 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                         else:
                             cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + item['r_name']
 
-                    #print(','.join(hla_maxset) + "\t" + cassette_path)
-                    out_file.write(','.join(hla_maxset) + "\t" + cassette_path + "\n")
                     num_paths += 1
+                    out_file.write("{}\t{}\t{}\n".format(num_paths, ','.join(hla_maxset), cassette_path))
+                    cass_fasta.write(cassette_path, output_file + '.' + str(num_paths) + '.fa')
+
                     if n_var > 0 and num_paths >= n_var:
                         break
             else:
@@ -196,7 +177,6 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                             cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + \
                                             item['r_name']
 
-                    # print("full_set\t" + cassette_path)
                     num_paths += 1
                     out_file.write("{}\tfull_set\t{}\n".format(num_paths, cassette_path))
                     cass_fasta.write(cassette_path, output_file + '.' + str(num_paths) + '.fa')
@@ -319,6 +299,3 @@ class FastaParser:
     def get(self):
         return self._fasta.values()
 # end of class FastaParser
-
-if __name__ == "__main__":
-    main()
