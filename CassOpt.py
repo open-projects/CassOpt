@@ -101,7 +101,8 @@ def main():
 
 def check_predictor(name):
     out_str = os.popen(name).read()
-    installed = re.search('Usage.+' + name.rstrip(string.digits), out_str)
+    pname = re.sub(r'.*/', '', name)
+    installed = re.search('Usage.+' + pname.rstrip(string.digits), out_str)
     if (installed):
         return 1
     return 0
