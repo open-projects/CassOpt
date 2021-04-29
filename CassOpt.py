@@ -10,6 +10,7 @@ import glob
 from modules import cashuff
 from modules import cabuilder
 
+
 def main():
     input_parser = argparse.ArgumentParser(description='CassOpt: the program for optimization of mini-gene cassettes.')
     input_parser.add_argument('-f', metavar='input_file.fa', help='the FASTA file of peptides with flanks; the fasta header format: >name (beg_pept_pos..end_pept_pos)', required=True)

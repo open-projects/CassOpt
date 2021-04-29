@@ -118,11 +118,11 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
             if flexible_mode:
                 hla_maxset = list(hla_set)
                 for i in range(len(names) - 1):
-                    l_name, r_name =  names[i], names[i + 1]
+                    l_name, r_name = names[i], names[i + 1]
                     sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
                           "WHERE l_name = ? AND r_name = ? AND hla in ({hla}) " \
                           "GROUP BY l_pos, r_pos " \
-                          "ORDER BY n DESC, l_pos, r_pos DESC LIMIT 1".format(hla=','.join(['?'] * len(hla_maxset)))
+                          "ORDER BY n DESC, l_pos - r_pos LIMIT 1".format(hla=','.join(['?'] * len(hla_maxset)))
                     cursor.execute(sql, [l_name, r_name] + hla_maxset)
 
                     for l_pos, r_pos, n in cursor.fetchall():
@@ -156,7 +156,7 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                 sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
                       "WHERE l_name = ? AND r_name = ? " \
                       "GROUP BY l_pos, r_pos HAVING n = ?" \
-                      "ORDER BY n DESC, l_pos, r_pos DESC LIMIT 1"
+                      "ORDER BY n DESC, l_pos - r_pos LIMIT 1"
                 for i in range(len(names) - 1):
                     l_name, r_name =  names[i], names[i + 1]
                     cursor.execute(sql, [l_name, r_name, n_hla])
