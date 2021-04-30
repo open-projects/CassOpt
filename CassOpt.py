@@ -25,6 +25,7 @@ def main():
     input_parser.add_argument('-k', action='store_true', help='keep temporary files intact', required=False)
     input_parser.add_argument('-r', action='store_true', help='rebuild the cassette using its temporary files', required=False)
     input_parser.add_argument('-t', type=int, default=0, help='the HLA number threshold (it works only for fleXible mode)', required=False)
+    input_parser.add_argument('-all', action='store_true', help='find all variants of the cassette (it works only for default mode)', required=False)
 
     args = input_parser.parse_args()
     in_file = args.f
@@ -39,6 +40,7 @@ def main():
     keep_tmp = args.k
     rebuild = args.r
     hla_num = args.t
+    print_all = args.all
 
     tmp_dir = out_dir + '/tmp'
     pred_output = tmp_dir + '/binding.pred'
@@ -91,7 +93,7 @@ def main():
         for f in glob.glob(out_dir + '/cassette*'):
             os.remove(f)
 
-    n_path = cabuilder.cabuild(sqldb, in_file, fasta_solid, pred_output, cass_output, flex_mode, n_var, hla_num)
+    n_path = cabuilder.cabuild(sqldb, in_file, fasta_solid, pred_output, cass_output, flex_mode, print_all, n_var, hla_num)
     print('found {} cassette variants'.format(n_path))
 
     if not keep_tmp:

@@ -7,7 +7,7 @@ import itertools
 
 from modules import fparser
 
-def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexible_mode, n_var, hla_num):
+def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexible_mode, print_all, n_var, hla_num):
     prediction = PredParser(pred_file)
     fasta = FastaParser(fasta_file)
     
@@ -113,9 +113,9 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
             names.extend(list(inter))
             if stop_name != '':
                 names.append(stop_name)
-            path = Path()
 
             if flexible_mode:
+                path = Path()
                 hla_maxset = list(hla_set)
                 for i in range(len(names) - 1):
                     l_name, r_name = names[i], names[i + 1]
@@ -151,38 +151,52 @@ def cabuild(sqlite_file, input_file, fasta_file, pred_file, output_file, flexibl
                     if n_var > 0 and num_paths >= n_var:
                         break
             else:
+                paths = []
                 in_path = 0
                 n_hla = len(hla_set)
                 sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
                       "WHERE l_name = ? AND r_name = ? " \
                       "GROUP BY l_pos, r_pos HAVING n = ?" \
                       "ORDER BY n DESC, l_pos - r_pos LIMIT 1"
+                if print_all:
+                    sql = "SELECT l_pos, r_pos, COUNT(DISTINCT hla) AS n FROM stealth_junctions " \
+                          "WHERE l_name = ? AND r_name = ? " \
+                          "GROUP BY l_pos, r_pos HAVING n = ?" \
+                          "ORDER BY n DESC, l_pos - r_pos"
                 for i in range(len(names) - 1):
-                    l_name, r_name =  names[i], names[i + 1]
+                    l_name, r_name = names[i], names[i + 1]
                     cursor.execute(sql, [l_name, r_name, n_hla])
                     in_path = 0
+                    tmp_paths = []
                     for l_pos, r_pos, n in cursor.fetchall():
-                        path.append(l_name, l_pos, r_name, r_pos)
+                        if not len(paths):
+                            paths.append(Path())
+                        for path in paths:
+                            tmp_path = path.copy()
+                            tmp_path.append(l_name, l_pos, r_name, r_pos)
+                            tmp_paths.append(tmp_path)
                         in_path = 1
+                    paths = tmp_paths
                     if not in_path:
                         break
 
                 if in_path:
-                    cassette_path = ''
-                    for item in path.get():
-                        if len(cassette_path):
-                            cassette_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(
-                                item['r_name'])
-                        else:
-                            cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + \
-                                            item['r_name']
+                    for path in paths:
+                        cassette_path = ''
+                        for item in path.get():
+                            if len(cassette_path):
+                                cassette_path += '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + str(
+                                    item['r_name'])
+                            else:
+                                cassette_path = item['l_name'] + '>' + str(item['l_pos']) + '|' + str(item['r_pos']) + '<' + \
+                                                item['r_name']
 
-                    num_paths += 1
-                    out_file.write("{}\tfull_set\t{}\n".format(num_paths, cassette_path))
-                    cass_fasta.write(cassette_path, output_file + '.' + str(num_paths) + '.fa')
+                        num_paths += 1
+                        out_file.write("{}\tfull_set\t{}\n".format(num_paths, cassette_path))
+                        cass_fasta.write(cassette_path, output_file + '.' + str(num_paths) + '.fa')
 
-                    if n_var > 0 and num_paths >= n_var:
-                        break
+                        if n_var > 0 and num_paths >= n_var:
+                            break
 
             if k % 100 == 0:
                 print("iteration {} of {} ({}%), found {} variants".format(k, m, int(k/m*100), num_paths), end='', flush=True)
